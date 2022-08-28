@@ -1,0 +1,9 @@
+_target_: masterscreativity.datamodules.csv_datamodule.CSVDatamodule
+model_name: 'gpt2'
+batch_size: 1
+data_paths: 'E:\Python Projects\masters-computional-creativity\data\EDA\mickiewicz_dataset.csv'
+train_val_ratio: 0.9
+padding: "max_length"
+truncation: "only_first"
+max_length: 512
+num_workers: 0

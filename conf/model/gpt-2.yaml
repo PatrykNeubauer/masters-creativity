@@ -1,0 +1,7 @@
+_target_: masterscreativity.models.CLMTransformer
+lr: 5e-5
+warmup_steps: 100
+model_name: 'gpt2'
+model_save_path: 'gpt2.pkl'
+max_seq_len: 512
+model_load_path: ''

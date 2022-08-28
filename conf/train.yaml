@@ -1,0 +1,23 @@
+project: test
+output_dir: outputs
+
+defaults:
+  - _self_
+  - model: gpt-2
+  - logger: default
+  - callbacks: default
+  - datamodule: csv_clm
+
+trainer:
+  max_epochs: 15
+  accelerator: gpu
+  devices: 1
+  precision: 16
+  log_every_n_steps: 10
+  fast_dev_run: False
+
+hydra:
+    run:
+        dir: ${output_dir}/${project}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    sweep:
+        dir: ${output_dir}/multirun/${project}/${now:%Y-%m-%d}/${now:%H-%M-%S}
