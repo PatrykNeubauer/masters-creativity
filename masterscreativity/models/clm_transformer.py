@@ -9,7 +9,7 @@ class CLMTransformer(pl.LightningModule):
     def __init__(self,
             lr=5e-5,
             warmup_steps=100,
-            model_name='gpt2',
+            model_name='flax-community/papuGaPT2',
             model_save_path='gpt2.pkl',
             max_seq_len=512,
             model_load_path=''
@@ -27,18 +27,13 @@ class CLMTransformer(pl.LightningModule):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         if model_load_path != '':
-            self.model.load_state_dict(torch.load(model_load_path, map_location='cuda'))
+            print("Loading model...")
+            self.model.load_state_dict(torch.load(model_load_path, map_location="cuda"))
+
 
     def _step(self, batch, batch_idx):
         outputs = self.model(**batch)
         loss = outputs[0]
-
-        # print('\n\n_step\nbatch:')
-        # print(batch)
-        # print('\n\noutputs')
-        # print(outputs)
-        # print('\n\nloss')
-        # print(loss)
 
         return loss
 
@@ -47,6 +42,11 @@ class CLMTransformer(pl.LightningModule):
         self.log("train_loss", loss)
         return loss
 
+    def training_epoch_end(self, outputs):
+        if self.trainer.global_step > 0:
+            print("Saving model...")
+            torch.save(self.model.state_dict(), self.model_save_path)
+
     # TODO: Add additional metrics 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         loss = self._step(batch, batch_idx)
@@ -54,7 +54,7 @@ class CLMTransformer(pl.LightningModule):
 
     def generate(self, text, **kwargs):
         inputs = self.tokenizer(text, return_tensors="pt")
-        return self.model.generate(inputs["input_ids"], **kwargs)
+        return self.model.generate(inputs["input_ids"].to('cuda:0'), **kwargs)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
