@@ -26,7 +26,7 @@ class CLMTransformer(pl.LightningModule):
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        if model_load_path != '':
+        if model_load_path not in ['', None]:
             print("Loading model...")
             self.model.load_state_dict(torch.load(model_load_path, map_location="cuda"))
 
