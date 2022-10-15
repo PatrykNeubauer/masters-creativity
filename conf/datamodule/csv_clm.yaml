@@ -1,7 +1,7 @@
 _target_: masterscreativity.datamodules.csv_datamodule.CSVDatamodule
-model_name: 'gpt2'
-batch_size: 1
-data_paths: 'E:\Python Projects\masters-computional-creativity\data\EDA\mickiewicz_dataset.csv'
+model_name: ${model.model_name} #'flax-community/papuGaPT2'
+batch_size: 4
+data_paths: 'E:\Python Projects\masters-computional-creativity\data\datafiles\wolnelektury\basic_cleaning\fraszka.csv'
 train_val_ratio: 0.9
 padding: "max_length"
 truncation: "only_first"
