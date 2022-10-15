@@ -36,13 +36,7 @@ class CSVDatamodule(pl.LightningDataModule):
         dataset = dataset.map(self.tokenize_function, batched=False)
         dataset = dataset.map(remove_columns=['id', 'text'])
         # dataset.set_format("pt", columns=['input_ids', 'attention_mask'], output_all_columns=True)
-        
-        
-        print('\n\nDataset sample (prepare data): ')  # TODO: Delete
-        print(dataset['train'][0])
-
         dataset.save_to_disk('tokenized_dataset')
-        # return ?
 
     def setup(self, stage):
         dataset = load_from_disk('tokenized_dataset')
@@ -50,8 +44,6 @@ class CSVDatamodule(pl.LightningDataModule):
         dataset = dataset['train'].train_test_split(train_size=self.train_val_ratio)
         self.train_dataset = dataset['train']
         self.val_dataset = dataset['test']
-        # transforms?
-        # return ?
 
     def tokenize_function(
         self,
@@ -66,19 +58,13 @@ class CSVDatamodule(pl.LightningDataModule):
         examples,
         text_column_name='text'
         ):
-        examples[text_column_name] = examples[text_column_name].rstrip(string.punctuation + ' ' + '\n')
+        examples[text_column_name] = examples[text_column_name].rstrip(string.punctuation + ' ' + '\n').replace('\\n', '\n')
         return examples
 
     def train_dataloader(self):
-        # print('\n\nDataset sample (train data - train dataloader): ') # TODO: Delete
-        # print(self.train_dataset[0])
-
         return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=self.collate_fn)
 
     def val_dataloader(self):
-        # print('\n\nDataset sample (val data - val dataloader): ') # TODO: Delete
-        # print(self.val_dataset[0])
-
         return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers, collate_fn=self.collate_fn)
 
     @property
