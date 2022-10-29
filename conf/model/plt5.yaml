@@ -1,0 +1,6 @@
+_target_: masterscreativity.models.Seq2SeqTransformer
+lr: 3e-4
+warmup_steps: 50
+model_name: 'allegro/plt5-base'
+model_save_path: 'plt5.pkl'
+model_load_path: ''
