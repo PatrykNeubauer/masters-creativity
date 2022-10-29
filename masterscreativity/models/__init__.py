@@ -1,1 +1,2 @@
 from masterscreativity.models.clm_transformer import CLMTransformer
+from masterscreativity.models.seq2seq_transformer import Seq2SeqTransformer
