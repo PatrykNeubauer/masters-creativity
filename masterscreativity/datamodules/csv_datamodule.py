@@ -24,6 +24,8 @@ class CSVDatamodule(pl.LightningDataModule):
             data_paths,
             mode,
             train_val_ratio=0.9,
+            prefix='',
+            suffix='',
             padding="max_length",
             truncation="only_first",
             max_length=512,
@@ -38,6 +40,8 @@ class CSVDatamodule(pl.LightningDataModule):
         assert self.mode in ['clm', 'seq2seq'], 'Only "clm" and "seq2seq" modes are supported.'
 
         self.train_val_ratio = train_val_ratio
+        self.prefix = prefix
+        self.suffix = suffix
         self.padding = padding
         self.truncation = truncation
         self.max_length = max_length
@@ -46,16 +50,20 @@ class CSVDatamodule(pl.LightningDataModule):
 
     def prepare_data(self):
         dataset = load_dataset("csv", data_files=self.data_paths)
+        dataset = dataset.map(self.clean_function)
 
+        # Adding prefix and suffix to texts - perhaps should be more generalized?
+        if self.prefix != '':
+            dataset = dataset.map(self.add_prefix_function)
+        if self.suffix != '':
+            dataset = dataset.map(self.add_suffix_function)
+
+        dataset = dataset.map(self.tokenize_function, batched=False)
         # TODO: more transforms?
         if self.mode == 'clm':
-            dataset = dataset.map(self.clean_function)
-            dataset = dataset.map(self.tokenize_function, batched=False)
             dataset = dataset.map(remove_columns=['id', 'text'])
         elif self.mode =='seq2seq':
-            dataset = dataset.map(self.clean_function)
             dataset = dataset.map(self.clean_function, fn_kwargs={'text_column_name': 'target'})
-            dataset = dataset.map(self.tokenize_function, batched=False)
             dataset = dataset.map(
                 self.tokenize_function,
                 batched=False,
@@ -100,6 +108,22 @@ class CSVDatamodule(pl.LightningDataModule):
         text_column_name='text'
         ):
         examples[text_column_name] = examples[text_column_name].rstrip(string.punctuation + ' ' + '\n').replace('\\n', '\n')
+        return examples
+    
+    def add_prefix_function(
+        self,
+        examples,
+        text_column_name='text'
+        ):
+        examples[text_column_name] = self.prefix + examples[text_column_name]
+        return examples
+
+    def add_suffix_function(
+        self,
+        examples,
+        text_column_name='text'
+        ):
+        examples[text_column_name] = examples[text_column_name] + self.suffix
         return examples
 
     def train_dataloader(self):
