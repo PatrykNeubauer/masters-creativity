@@ -2,3 +2,6 @@
   dirpath: checkpoints
   every_n_epochs: 1
   save_top_k: -1
+- _target_: masterscreativity.callbacks.wandb_callbacks.LogCode
+  code_dir: E:\Python Projects\masters-computional-creativity\masters-creativity
+- _target_: masterscreativity.callbacks.wandb_callbacks.LogHydraParameters

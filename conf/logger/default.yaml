@@ -3,4 +3,4 @@ project: ${project}
 entity: patryk-neubauer
 name: ???
 offline: False
-log_model: False
+log_model: 'all'
