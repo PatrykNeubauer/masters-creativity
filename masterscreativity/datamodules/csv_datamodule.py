@@ -1,14 +1,11 @@
 import pytorch_lightning as pl
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
-from datasets import load_dataset, load_from_disk, Dataset
+from datasets import load_dataset, load_from_disk
 import string
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
 
-# TODO: Split max_length into max_source_len, max_target_len
-#       Utilize max_source_len only with GPT, move it as a parameter to tokenize function.
-#       padding unused for now
 class CSVDatamodule(pl.LightningDataModule):
     """
     Datamodule class for .csv datasets.
@@ -16,7 +13,12 @@ class CSVDatamodule(pl.LightningDataModule):
     It has different modes for different types of models:
         - "clm" - for Casual Language Modeling models (e.g. GPT-2), that reads "id" and "text", while tokenizing the latter.
         - "seq2seq" - for seq2seq models (e.g. T5), that reads "id", "text" and "target", while tokenizing the latter two.
-        - TODO: BERT-like.
+
+    TODO: 
+        - mode for BERT-like models
+        - Split max_length into max_source_len, max_target_len
+            - max_source_len only on CLM and BERT; both on seq2seq models
+        - Utilize padding (read up which models prefer which)
     """
     def __init__(self,
             model_name,
@@ -36,7 +38,7 @@ class CSVDatamodule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.data_paths = data_paths
 
-        self.mode = mode
+        self.mode = mode.lower()
         assert self.mode in ['clm', 'seq2seq'], 'Only "clm" and "seq2seq" modes are supported.'
 
         self.train_val_ratio = train_val_ratio
@@ -49,10 +51,17 @@ class CSVDatamodule(pl.LightningDataModule):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     def prepare_data(self):
+        """
+        This function:
+            1) Loads .csv data.
+            2) Cleans the text.
+            3) Adds prefixes/suffixes.
+            4) Tokenizes the text (and target in case of seq2seq).
+            5) Saves it to disk (caching).
+        """
         dataset = load_dataset("csv", data_files=self.data_paths)
         dataset = dataset.map(self.clean_function)
 
-        # Adding prefix and suffix to texts - perhaps should be more generalized?
         if self.prefix != '':
             dataset = dataset.map(self.add_prefix_function)
         if self.suffix != '':
@@ -78,9 +87,15 @@ class CSVDatamodule(pl.LightningDataModule):
         dataset.save_to_disk('tokenized_dataset')
 
     def setup(self, stage):
+        """
+        This function:
+            1) Loads the already tokenized dataset saved in prepare_data.
+            2) Sets the correct format depending on the mode.
+            3) Splits it into train/test splits.
+        """
         dataset = load_from_disk('tokenized_dataset')
         if self.mode == 'clm':
-            dataset.set_format("pt", columns=['input_ids', 'attention_mask'], output_all_columns=True)
+            dataset.set_format("pt", columns=['input_ids', 'attention_mask'], output_all_columns=False)
         elif self.mode =='seq2seq':
             dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
         

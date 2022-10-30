@@ -1,11 +1,12 @@
 import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup
 import pytorch_lightning as pl
-from torch.optim.lr_scheduler import LinearLR
 
 
 class Seq2SeqTransformer(pl.LightningModule):
-
+    """
+    Class for seq2seq (sequence-to-sequence) models e.g. T5.
+    """
     def __init__(self,
             lr=3e-4,
             warmup_steps=100,
@@ -30,8 +31,7 @@ class Seq2SeqTransformer(pl.LightningModule):
 
     def _step(self, batch, batch_idx):
         outputs = self.model(**batch)
-        loss = outputs[0]
-
+        loss = outputs.loss
         return loss
 
     def training_step(self, batch, batch_idx):

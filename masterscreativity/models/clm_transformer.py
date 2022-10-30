@@ -1,16 +1,17 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 import pytorch_lightning as pl
-from torch.optim.lr_scheduler import LinearLR
 
 
 class CLMTransformer(pl.LightningModule):
-
+    """
+    Class for CLM (Causal Language Modeling) models e.g. GPT-2.
+    """
     def __init__(self,
             lr=5e-5,
             warmup_steps=100,
             model_name='flax-community/papuGaPT2',
-            model_save_path='gpt2.pkl',
+            model_save_path='papuGaPT2.pkl',
             max_seq_len=512,
             model_load_path=''
     
@@ -30,11 +31,9 @@ class CLMTransformer(pl.LightningModule):
             print("Loading model...")
             self.model.load_state_dict(torch.load(model_load_path, map_location="cuda"))
 
-
     def _step(self, batch, batch_idx):
         outputs = self.model(**batch)
-        loss = outputs[0]
-
+        loss = outputs.loss
         return loss
 
     def training_step(self, batch, batch_idx):
