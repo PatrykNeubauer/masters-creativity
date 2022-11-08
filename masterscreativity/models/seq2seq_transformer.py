@@ -50,7 +50,7 @@ class Seq2SeqTransformer(pl.LightningModule):
         self.log("val_loss", loss, sync_dist=True)
 
     def generate(self, text, **kwargs):
-        inputs = self.tokenizer(text, max_length=self.max_source_len, return_tensors="pt")
+        inputs = self.tokenizer(text, return_tensors="pt")
         return self.model.generate(inputs["input_ids"].to('cuda:0'), **kwargs) # TODO: Generalize device
 
     def configure_optimizers(self):

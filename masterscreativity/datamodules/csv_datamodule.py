@@ -70,6 +70,8 @@ class CSVDatamodule(pl.LightningDataModule):
         dataset = dataset.map(self.tokenize_function, batched=False)
         # TODO: more transforms?
         if self.mode == 'clm':
+            dataset['train'].add_column('labels', dataset['train']['input_ids'])
+            print(dataset[0])
             dataset = dataset.map(remove_columns=['id', 'text'])
         elif self.mode =='seq2seq':
             dataset = dataset.map(self.clean_function, fn_kwargs={'text_column_name': 'target'})
