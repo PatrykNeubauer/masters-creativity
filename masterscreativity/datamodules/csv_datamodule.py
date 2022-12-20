@@ -70,8 +70,9 @@ class CSVDatamodule(pl.LightningDataModule):
         dataset = dataset.map(self.tokenize_function, batched=False)
         # TODO: more transforms?
         if self.mode == 'clm':
-            dataset['train'].add_column('labels', dataset['train']['input_ids'])
-            print(dataset[0])
+            # DataCollatorForLanguageModeling BUG: 
+            # Normally clm collator would add labels automatically, but it's bugged so it has to be done manually.
+            dataset['train'] = dataset['train'].add_column('labels', dataset['train']['input_ids'])
             dataset = dataset.map(remove_columns=['id', 'text'])
         elif self.mode =='seq2seq':
             dataset = dataset.map(self.clean_function, fn_kwargs={'text_column_name': 'target'})
@@ -96,10 +97,14 @@ class CSVDatamodule(pl.LightningDataModule):
             3) Splits it into train/test splits.
         """
         dataset = load_from_disk('tokenized_dataset')
-        if self.mode == 'clm':
-            dataset.set_format("pt", columns=['input_ids', 'attention_mask'], output_all_columns=False)
-        elif self.mode =='seq2seq':
-            dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
+
+        # DataCollatorForLanguageModeling BUG:
+        # Normally 'clm' mode datamodule wouldn't have 'labels' here, so it'd be:
+        # if self.mode == 'clm':
+        #     dataset.set_format("pt", columns=['input_ids', 'attention_mask'], output_all_columns=False)
+        # elif self.mode =='seq2seq':
+        #     dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
+        dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
         
         dataset = dataset['train'].train_test_split(train_size=self.train_val_ratio)
         self.train_dataset = dataset['train']
@@ -153,6 +158,9 @@ class CSVDatamodule(pl.LightningDataModule):
     def collate_fn(self):
         if self.mode == 'clm':
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            return DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
+            # DataCollatorForLanguageModeling BUG:
+            # Junky workaround for LM collator treating all EOS as -100
+            # return DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
+            return DataCollatorForSeq2Seq(self.tokenizer) 
         elif self.mode =='seq2seq':
             return DataCollatorForSeq2Seq(self.tokenizer)
