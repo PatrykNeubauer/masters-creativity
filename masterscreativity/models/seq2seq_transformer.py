@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup, Adafactor
 import pytorch_lightning as pl
 
 
@@ -54,8 +54,10 @@ class Seq2SeqTransformer(pl.LightningModule):
         return self.model.generate(inputs["input_ids"].to('cuda:0'), **kwargs) # TODO: Generalize device
 
     def configure_optimizers(self):
+        """
+        # AdamW code
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
-
+        
         # TODO: Change scheduler (cosine?) and probably training/warm up steps
         scheduler = get_linear_schedule_with_warmup(
             optimizer, num_warmup_steps=self.warmup_steps, num_training_steps=self.trainer.estimated_stepping_batches
@@ -64,3 +66,6 @@ class Seq2SeqTransformer(pl.LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {"scheduler": scheduler, "interval": "step", "frequency": 1},
         }
+        """
+        optimizer = Adafactor(self.parameters(), warmup_init=True)
+        return {"optimizer": optimizer}
