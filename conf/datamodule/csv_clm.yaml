@@ -1,9 +1,12 @@
 _target_: masterscreativity.datamodules.csv_datamodule.CSVDatamodule
 model_name: ${model.model_name}
 batch_size: 4
-data_paths: 'E:\Python Projects\masters-computional-creativity\data\datafiles\wolnelektury\basic_cleaning\fraszka.csv'
+data_paths: 
+  train: 'E:\Python Projects\masters-computional-creativity\data\datafiles\wolnelektury\quartets\quartets_gpt_train.csv'
+  test: 'E:\Python Projects\masters-computional-creativity\data\datafiles\wolnelektury\quartets\quartests_gpt_test.csv'
 mode: 'clm'
 train_val_ratio: 0.9
+suffix: '<|endoftext|>'
 padding: "max_length"
 truncation: "only_first"
 max_length: 512

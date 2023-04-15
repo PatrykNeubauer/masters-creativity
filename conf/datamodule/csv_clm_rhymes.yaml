@@ -4,6 +4,7 @@ batch_size: 4
 data_paths: 'E:\Python Projects\masters-computional-creativity\data\datafiles\wolnelektury\rhyming_words\v2 h6.csv'
 mode: 'clm'
 train_val_ratio: 0.9
+suffix: '<|endoftext|>'
 padding: "max_length"
 truncation: "only_first"
 max_length: 64
