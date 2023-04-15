@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from datasets import load_dataset, load_from_disk
 import string
 from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
-
+from omegaconf.dictconfig import DictConfig
 
 class CSVDatamodule(pl.LightningDataModule):
     """
@@ -36,7 +36,11 @@ class CSVDatamodule(pl.LightningDataModule):
         super().__init__()
         self.model_name = model_name
         self.batch_size = batch_size
-        self.data_paths = data_paths
+        
+        if isinstance(data_paths, DictConfig):
+            self.data_paths = dict(data_paths)
+        else:
+            self.data_paths = data_paths
 
         self.mode = mode.lower()
         assert self.mode in ['clm', 'seq2seq'], 'Only "clm" and "seq2seq" modes are supported.'
@@ -72,7 +76,8 @@ class CSVDatamodule(pl.LightningDataModule):
         if self.mode == 'clm':
             # DataCollatorForLanguageModeling BUG: 
             # Normally clm collator would add labels automatically, but it's bugged so it has to be done manually.
-            dataset['train'] = dataset['train'].add_column('labels', dataset['train']['input_ids'])
+            for split in dataset:
+                dataset[split] = dataset[split].add_column('labels', dataset[split]['input_ids'])
             dataset = dataset.map(remove_columns=['id', 'text'])
         elif self.mode =='seq2seq':
             dataset = dataset.map(self.clean_function, fn_kwargs={'text_column_name': 'target'})
@@ -106,7 +111,8 @@ class CSVDatamodule(pl.LightningDataModule):
         #     dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
         dataset.set_format("pt", columns=['input_ids', 'attention_mask', 'labels'], output_all_columns=False)
         
-        dataset = dataset['train'].train_test_split(train_size=self.train_val_ratio)
+        if 'test' not in dataset: 
+            dataset = dataset['train'].train_test_split(train_size=self.train_val_ratio)
         self.train_dataset = dataset['train']
         self.val_dataset = dataset['test']
 
